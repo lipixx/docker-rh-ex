@@ -26,15 +26,15 @@ of REDIS available on DockerHub.
 The other alternative is to simply import a minimal image, like the centos one,
 and to install and configure the database within that image.
 
-This last approach is used in this exercice, configuration of the server has
+This last approach is used in this exercice. Configuration of the server has
 been set by default.
 
 ###Build&Run REDIS Database container
 
 To build and test it standalone in Docker:
 ```
-]$ git clone github/docker-rh-ex/redis .
-]$ cd redis
+]$ git clone git@github.com:lipixx/docker-rh-ex.git
+]$ cd docker-rh-ex/redis
 ]$ docker build  -t docker-rh-ex/redis .
 ]$ docker run --name redis docker-rh-ex/redis -d
 ```
@@ -53,8 +53,8 @@ with ruby and the required gems, redis and sinatra.
 
 We are going to connect the Ruby APP to a LBR, and also to Redis DB.
 
-Sinatra must listen not only to localhost interfaces, this is the default
-behaviour, so we have added a line to the ruby app in order to intsruct it to
+Sinatra must listen not only to localhost interfaces, (this is the default
+behaviour), so we have added a line to the ruby app in order to intsruct it to
 listen to all interfaces.
 
 The added line is shown here:
@@ -63,8 +63,7 @@ The added line is shown here:
 +++ new/hello-world.rb	2016-10-28 22:11:24.091627605 +0200
 @@ -3,8 +3,6 @@ require 'redis'
   
- redis = Redis.new(:host => ENV["REDIS_HOST"] || "127.0.0.1" , :port => \
- ENV["REDIS_PORT"] || 6379)
+ redis = Redis.new(:host => ENV["REDIS_HOST"] || "127.0.0.1" , :port =>  ENV["REDIS_PORT"] || 6379)
  
 +set :bind, '0.0.0.0'
 ```
@@ -72,8 +71,8 @@ The added line is shown here:
 Moreover, the exercices demands us to use two custom variables, REDIS_HOST and
 REDIS_PORT. When you link a container with another one, some default variables
 are set in the environment. We must take this variables and map them to the
-custom one before runing the ruby application. This is achieved using a helper
-script calloed run_hello-world.sh, that is copied into the container and used
+custom ones before runing the ruby application. This is achieved using a helper
+script called run_hello-world.sh, that is copied into the container and used
 as the main entry point.
 
 ###Build & Run Ruby APP
@@ -99,7 +98,7 @@ LBR to our app.
 
 
 
-##Requirements: 
+#Requirements: 
 
    - Full description of how to get the application running using the method you choose.
    - A github repo with your dockerfiles, compose files, or all the info needed.
