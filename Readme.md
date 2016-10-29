@@ -75,6 +75,9 @@ custom ones before runing the ruby application. This is achieved using a helper
 script called run_hello-world.sh, that is copied into the container and used
 as the main entry point.
 
+**Note about the app: There is a redis.ping command that outputs nothing. If you want to see
+anything you should add "redis.ping" as an argument to puts: "puts redis.ping"**
+
 ###Build & Run Ruby APP
 ```
 ]$ git clone github/docker-rh-ex/app1 .
@@ -94,8 +97,11 @@ LBR to our app.
 
 # Adding the components to OpenShift and providing the final endpoint
 
-
-
+oc login https://api.preview.openshift.com
+oc project redhat-i1
+oc status
+oc delete dc app -n redhat-i1
+oc start-build app1 -n redhat-i1
 
 
 #Requirements: 
