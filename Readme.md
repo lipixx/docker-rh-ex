@@ -86,7 +86,7 @@ anything you should add "redis.ping" as an argument to puts: "puts redis.ping"**
 ```
 Test it from localhost:
 ```
-]$ docker run --link redis:db -p 4567:4567 --name app1 docker-rh-ex/app1
+]$ docker run --link redis:redis -p 4567:4567 --name app1 docker-rh-ex/app1
 ]$ curl http://localhost:4567/
 ```
 ##Load Balancer
