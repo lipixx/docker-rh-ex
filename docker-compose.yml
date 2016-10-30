@@ -1,0 +1,15 @@
+services:
+  app1:
+    image: lipixx/app1
+    ports:
+      - "4567"
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    depends_on:
+      - redis
+
+  redis:
+    image: lipixx/redis
+    container_name: redis
+    command: redis-server --appendonly yes
