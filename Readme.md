@@ -118,8 +118,8 @@ To see your images:
 
 To push our images:
 ```
-]$ docker push lipixx/app1
 ]$ docker push lipixx/redis
+]$ docker push lipixx/app1
 ```
 
 ##Step 4 - Load Balancer (OpenShift approach)
@@ -141,8 +141,8 @@ Project Docker RedHat Exercise.
 ```
 ]$ oc login https://api.preview.openshift.com --token=*****
 ]$ oc new-project docker-rh-ex
-]$ oc new-app lipixx/app1
 ]$ oc new-app lipixx/redis
+]$ oc new-app lipixx/app1
 ```
 
 At this point we created a project into our account called docker-rh-ex and
@@ -153,18 +153,17 @@ in the second command.
 
 ###Networking within services and expose app1
 
-From web console, group app1 and redis services. We could have done that before
-with:
-```]$ oc new-app lipixx/app1+lipixx/redis```
+From web console, group app1 and redis services.
 
 Make access to app1 public:
 ```
 ]$ oc expose service/app1
 ```
 
-Make the app1 Highly Available:
+Make the app1 Highly Available adding replicas to the replication controller:
 ```
-]$ oc scale --replicas=2 rc app1
+]$ oc get rc
+]$ oc scale --replicas=2 rc app1-1
 ```
 
 ##Accessing the app
@@ -229,5 +228,16 @@ Update image manually:
 #Requirements: 
 
    - Full description of how to get the application running using the method you choose.
+   
+     Everything detailed here: https://github.com/lipixx/docker-rh-ex
+
    - A github repo with your dockerfiles, compose files, or all the info needed.
+
+     https://github.com/lipixx/docker-rh-ex
+
    - You must provide a single endpoint to access the application, we will use `curl http(s)://ENDPOINT_PROVIDED` 
+
+     The entry point is obtained with "oc get routes", for example: 
+     ```
+     app1-docker-rh-ex.44fs.preview.openshiftapps.com
+     ```
