@@ -207,7 +207,8 @@ See docker-compose.yml.lbr for an (untested) example.
 This is a cheatsheet for other common commands:
 
 Connect to a pod (container):
-```]$ oc get pods
+```
+]$ oc get pods
 ]$ oc rsh app1 bash
 ```
 To stop:
@@ -215,7 +216,9 @@ To stop:
 ]$ oc delete pod app1
 ```
 Logs of a deployment:
-```]$ oc logs -f dc/app1```
+```
+]$ oc logs -f dc/app1
+```
 
 Update image manually:
 ```
