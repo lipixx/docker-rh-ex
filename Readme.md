@@ -17,17 +17,27 @@ The diagram:
                     +--------->              +----------+
                               +--------------+
 ```
+#Architecture solution
+
+The solution choosen comprehends the creation of two docker images, one serving
+the redis database and the other the ruby app.
+
+Both images will be uploaded to Docker Hub, under my personal account (lipixx)
+and then imported to OpenShift.
+
+In OpenShift we will create a route and set the scale parameter to make the
+app load balanced.
+
 #Implementation of the separate components
 ##Step 1 - REDIS Database
 
 In order to provide a dockerized redis server, we could us the official image 
-of REDIS available on DockerHub.
+of REDIS available on DockerHub, but we opted to configure it from scratch.
 
-The other alternative is to simply import a minimal image, like the centos one,
+The alternative is to simply import a minimal image, like the centos one,
 and to install and configure the database within that image.
 
-This last approach is used in this exercice. Configuration of the server has
-been set by default.
+Check the Dockerfile under redis/Dockerfile to see how it is implemented.
 
 ###Build&Run REDIS Database container
 
@@ -39,7 +49,7 @@ To build and test it standalone in Docker:
 ]$ docker run --name redis docker-rh-ex/redis -d
 ```
 By default redis will listen to all interfaces, so you can test a connection
-from for example your local host:
+from, for example, your local host:
 ```
 ]$ redis-cli -h 172.17.0.1
 172.17.0.1:6379> get x
@@ -49,9 +59,9 @@ from for example your local host:
 ##Step 2 - Ruby APP
 
 For the ruby app, we use a single Dockerfile that installs a minimal CentOS
-with ruby and the required gems, redis and sinatra.
+with ruby and the required gems: redis and sinatra.
 
-We are going to connect the Ruby APP to a LBR, and also to Redis DB.
+We are going to connect the Ruby APP to Redis DB.
 
 Sinatra must listen not only to localhost interfaces, (this is the default
 behaviour), so we have added a line to the ruby app in order to intsruct it to
@@ -72,11 +82,16 @@ Moreover, the exercices demands us to use two custom variables, REDIS_HOST and
 REDIS_PORT. When you link a container with another one, some default variables
 are set in the environment. We must take this variables and map them to the
 custom ones before runing the ruby application. This is achieved using a helper
-script called run_hello-world.sh, that is copied into the container and used
+script called run_hello-world.sh that is copied into the container and used
 as the main entry point.
 
-**Note about the app: There is a redis.ping command that outputs nothing. If you want to see
-anything you should add "redis.ping" as an argument to puts: "puts redis.ping"**
+In OpenShift the variable passing is done the same way when you group applications.
+
+There is another option: configure the variables statically when deploying
+the container. If we want to do that we just need to set REDIS_HOST to the name of redis
+app (redis), and REDIS_PORT to 6379. This could be acomplished when defining new app:
+
+  ```oc new-app lipixx/app1 -e REDIS_HOST=redis -e POSTGRESQL_DATABASE=6379```
 
 ###Build & Run Ruby APP
 ```
@@ -89,20 +104,122 @@ Test it from localhost:
 ]$ docker run --link redis:redis -p 4567:4567 --name app1 docker-rh-ex/app1
 ]$ curl http://localhost:4567/
 ```
-##Load Balancer
+**Note:The second parameter of link, :redis, defines the prefix of the standard
+variable naming. The entrypoint script is programmed to get "redis" as prefix.
 
-For the load balancer we wanted to use Openshift. We will import our two
-dockerfiles into openshift, and setup a network that will provide access and
-LBR to our app.
+##Step 3 - Uploading images to Docker Hub
 
-# Adding the components to OpenShift and providing the final endpoint
+We assume you have a Docker Hub account.
 
-oc login https://api.preview.openshift.com
-oc project redhat-i1
-oc status
-oc delete dc app -n redhat-i1
-oc start-build app1 -n redhat-i1
+To see your images:
+```
+]$ docker images 
+```
 
+To push our images:
+```
+]$ docker push lipixx/app1
+]$ docker push lipixx/redis
+```
+
+##Step 4 - Load Balancer (OpenShift approach)
+
+For the load balancer we are going to use intrinsic features of Openshift. 
+
+First of all we must sign-up for an account, or use Openshift Origin. Since I
+had a preview account for RedHat OpenShift, I tried it directly there.
+
+###Install oc tools
+
+Access to the webconsole and click on "About". A link with instructions to
+install oc tools is shown.
+
+###Login and create a new project
+
+Project Docker RedHat Exercise.
+
+```
+]$ oc login https://api.preview.openshift.com --token=*****
+]$ oc new-project docker-rh-ex
+]$ oc new-app lipixx/app1
+]$ oc new-app lipixx/redis
+```
+
+At this point we created a project into our account called docker-rh-ex and
+created the first two imagestreams and deployment of our app1 and redis apps.
+
+If we wanted to use oficial redis image, we could just have omitted the lipixx/ 
+in the second command.
+
+###Networking within services and expose app1
+
+From web console, group app1 and redis services. We could have done that before
+with:
+```]$ oc new-app lipixx/app1+lipixx/redis```
+
+Make access to app1 public:
+```
+]$ oc expose service/app1
+```
+
+Make the app1 Highly Available:
+```
+]$ oc scale --replicas=2 rc app1
+```
+
+##Accessing the app
+
+Get the app1's URL entrypoint
+```
+]$ oc get routes
+```
+
+Port 4567 of app1 is exposed to internet through port 80, i.e.:
+
+http://app1-docker-rh-ex.44fs.preview.openshiftapps.com/
+
+shows:
+
+```
+"Hello World!" 
+```
+
+##Docker Compose
+
+For testing purposes in your local environment you can use the provided compose
+file to build app1 and redis images.
+
+**Note: This is not tested yet.
+
+##Manual Approach with a LBR
+
+If we still wanted to use a LBR instead of OpenShift, the only thing that we
+have to do is to create a Docker image with an Nginx or a HAProxy, configure it
+with a template, expose ports 80 and 443 and link it with app1 application.
+
+Then if wanted modify the docker-compose to add a network section with front-tier
+and back-tier networks, and configure each service section accordingly.
+
+See docker-compose.yml.lbr for an (untested) example.
+
+##Extra commands
+
+This is a cheatsheet for other common commands:
+
+Connect to a pod (container):
+]$ oc get pods
+]$ oc rsh app1 bash
+
+To stop:
+]$ oc delete pod app1
+
+Logs of a deployment:
+]$ oc logs -f dc/app1
+
+Update image manually:
+]$ oc get imagestream
+]$ oc import-image app1
+]$ oc deploy app1 --latest -n docker-rh-ex (already done automatically when imported)
 
 #Requirements: 
 

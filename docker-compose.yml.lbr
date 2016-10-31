@@ -1,6 +1,17 @@
 version: '2'
 
 services:
+  lbr:
+    image: lipixx/load-balancer
+    container_name: lbr
+    ports:
+      - "80:80"
+      - "443:80"
+    depends_on:
+      - app1
+    networks:
+      - frontend-tier
+
   app1:
     image: lipixx/app1
     ports:
