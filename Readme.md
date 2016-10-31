@@ -239,5 +239,5 @@ Update image manually:
 
      The entry point is obtained with "oc get routes", for example: 
      ```
-     app1-docker-rh-ex.44fs.preview.openshiftapps.com
+     http://app1-docker-rh-ex.44fs.preview.openshiftapps.com
      ```
